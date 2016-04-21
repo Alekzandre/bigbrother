@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1> current time: {{moment(current_time).format('LLL')}}</h1>
+<h1> user_agent = {{ue}}</h1>
+{% endblock %}
