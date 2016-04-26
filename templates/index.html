@@ -1,6 +1,21 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1> current time is {{moment(current_time).format('LLL')}}</h1>
-<h1> user_agent = {{ue}}</h1>
+<div id="stats_container">
+	<h1> current time: {{moment(current_time).format('LLL')}}</h1>
+	{% if ad and ma %}
+	<h1> adherents: {{ad}} </h1>
+	<h1> marcheurs: {{ma}} </h1>
+	{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+    <script>
+
+    	window.setInterval(function updateStats() {
+    		$('#stats_container').load('https://www.en-marche.fr/ajax.php?action=stats42');  
+    	}, 10);
+
+    </script>
 {% endblock %}
