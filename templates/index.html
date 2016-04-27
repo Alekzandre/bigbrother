@@ -4,18 +4,19 @@
 <div id="stats_container">
 	<h1> current time: {{moment(current_time).format('LLL')}}</h1>
 	{% if ad and ma %}
-	<h1> adherents: {{ad}} </h1>
-	<h1> marcheurs: {{ma}} </h1>
+	<h1> marcheurs: <span id="marcheur">{{ma}}</span> </h1>
+	<h1> adherents: <span id="adherent">{{ad}}</span> </h1>
 	{% endif %}
 </div>
 {% endblock %}
 {% block scripts %}
 {{super()}}
     <script>
-
     	window.setInterval(function updateStats() {
-    		$('#stats_container').load('https://www.en-marche.fr/ajax.php?action=stats42');  
-    	}, 10);
-
+    		$.getJSON('https://www.en-marche.fr/ajax.php?action=stats42',function(data){
+    		$("#adherent").text(data.a);
+    		$("#marcheur").text(data.i);
+    		});
+    	}, 1000);
     </script>
 {% endblock %}

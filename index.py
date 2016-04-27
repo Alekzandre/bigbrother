@@ -23,7 +23,6 @@ def page_not_found(e):
 # routes principales
 
 def update_stats():
-	print "fuck"
 	response = urllib2.urlopen('https://www.en-marche.fr/ajax.php?action=stats42')
 	try:
 		data = json.load(response)
@@ -37,8 +36,8 @@ def update_stats():
 def index():
 	try:
 		data = update_stats()
-		adherents = data[0]
-		marcheurs = data[1]
+		adherents = data[1]
+		marcheurs = data[0]
 	except:
 		return render_template('index.html', current_time=datetime.utcnow())
 	return render_template('index.html', current_time=datetime.utcnow(), ad=adherents, ma=marcheurs)
