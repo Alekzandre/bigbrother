@@ -31,42 +31,62 @@ def connect_to_db_prod():
 						db=confData['name']['name_enmarche'])
 	return db
 
-@app.route('/v0.0/today_ad')
+@app.route('/today_ad')
 def load_stats():
+	value = 0
 	db = connect_to_db_prod()
 	cur = db.cursor()
 	result = cur.execute("select count(*) from mac_inscriptions where created_at > '2016-04-27 22:00:00' and created_at < '2016-04-28 22:00:00' and adherent = 1;")
-	if result == 1:
-		for row in cur.fetchall():
-   			value = row[0]
-   			print value
-   			return jsonify({'today_ad':value})
-   	return "<h1>coucou</h1>"
+	for row in cur.fetchall():
+		value = row[0]
+		print value
+	return jsonify({'today_ad':value})
 
-@app.route('/v0.0/all_stats')
+
+@app.route('/all_stats')
 def load_stats_bis():
+	value = 0
+	value1 = 0
 	db = connect_to_db_prod()
 	cur = db.cursor()
 	result = cur.execute("select count(*) from mac_inscriptions;")
-	if result == 1:
-		for row in cur.fetchall():
-   			value = row[0]
-   			print value
-   	result = cur.execute("select count(*) from mac_inscriptions where adherent = 1;")
-	if result == 1:
-		for row in cur.fetchall():
-   			value1 = row[0]
-   			print value1
-   			res = [{'total':value},{'adherents':value1}]
-   			return jsonify(results=res)
-   	return "<h1>coucou</h1>"
+	for row in cur.fetchall():
+			value = row[0]
+			print value
+	result = cur.execute("select count(*) from mac_inscriptions where adherent = 1;")
+	for row in cur.fetchall():
+			value1 = row[0]
+			print value1
+	res = [{'total':value},{'adherents':value1}]
+	return jsonify(results=res)
 
-@app.route('/v0.0/test')
+@app.route('/test')
 def test():
-	pass	
-
-	# start_date = date( 'Y-m-d 00:00:00', $start );
-	# $end_date   = date( 'Y-m-d 00:00:00', $end   );
+	db = connect_to_db_prod()
+	cur = db.cursor()
+	x = 5
+	stat_list = []
+	while x < 27:
+		ad = 0
+		ma = 0
+		start = "16/04/" + str(x) + " 22:00:00"
+		end = "16/04/" + str(x + 1) + " 22:00:00"
+		request = "select count(*) from mac_inscriptions where created_at > '" + start + "' and created_at < '" + end + "';"
+		# print request
+		cur.execute(request)
+		for row in cur.fetchall():
+   			ma = row[0]
+   			# print "16/04/" + str(x + 1) + " marcheurs: " + str(ma)
+		request1 = "select count(*) from mac_inscriptions where created_at > '" + start + "' and created_at < '" + end + "' and adherent = 1;"
+		# print request1
+		cur.execute(request1)
+		for row in cur.fetchall():
+   			ad = row[0]
+   			# print "16/04/" + str(x + 1) + " adherents: " + str(ad)
+   		print "16/04/" + str(x + 1) + " marcheurs: " + str(ma) + " adherents: " + str(ad) +"."
+   		stat_list.append("16/04/" + str(x + 1) + ',' + str(ma) + ',' + str(ad))
+		x = x + 1
+	return jsonify(results=stat_list)
 
 
 def update_stats():
