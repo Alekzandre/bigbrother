@@ -23,6 +23,8 @@ def page_not_found(e):
 # utils
 
 def connect_to_db_prod():
+''' connection a la db de prod via tunnel ssh'''
+
 	json_conf = open('db.conf')
 	confData = json.loads(str(json_conf.read()))
 	db = MySQLdb.connect(host=confData['host']['host_enmarche'],
@@ -33,6 +35,8 @@ def connect_to_db_prod():
 
 @app.route('/today_ad')
 def load_stats():
+'''stats de la journee en cours'''
+
 	value = 0
 	db = connect_to_db_prod()
 	cur = db.cursor()
@@ -45,6 +49,8 @@ def load_stats():
 
 @app.route('/all_stats')
 def load_stats_bis():
+''' total marcheurs / adherents'''
+
 	value = 0
 	value1 = 0
 	db = connect_to_db_prod()
@@ -62,11 +68,13 @@ def load_stats_bis():
 
 @app.route('/test')
 def test():
+''' stats de chaque journee depuis le lancement'''
+
 	db = connect_to_db_prod()
 	cur = db.cursor()
 	x = 5
 	stat_list = []
-	while x < 27:
+	while x < 29:
 		ad = 0
 		ma = 0
 		start = "16/04/" + str(x) + " 22:00:00"
@@ -90,6 +98,8 @@ def test():
 
 
 def update_stats():
+''' a virer et utilisation de all_stats'''
+
 	response = urllib2.urlopen('https://www.en-marche.fr/ajax.php?action=stats42')
 	try:
 		data = json.load(response)
