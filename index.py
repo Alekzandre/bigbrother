@@ -2,7 +2,7 @@ from flask import Flask, request, render_template, jsonify, redirect, url_for
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.script import Manager
 from flask.ext.moment import Moment
-from datetime import datetime
+from datetime import datetime, timedelta
 import facebook, urllib2, json, MySQLdb, os
 
 app = Flask(__name__)
@@ -23,7 +23,6 @@ def page_not_found(e):
 # utils
 
 def connect_to_db_prod():
-''' connection a la db de prod via tunnel ssh'''
 
 	json_conf = open('db.conf')
 	confData = json.loads(str(json_conf.read()))
@@ -35,21 +34,23 @@ def connect_to_db_prod():
 
 @app.route('/today_ad')
 def load_stats():
-'''stats de la journee en cours'''
 
 	value = 0
 	db = connect_to_db_prod()
 	cur = db.cursor()
-	result = cur.execute("select count(*) from mac_inscriptions where created_at > '2016-04-27 22:00:00' and created_at < '2016-04-28 22:00:00' and adherent = 1;")
+	base = datetime.utcnow()-timedelta(days=1)
+	base = base.strftime("%Y-%m-%d")
+	start = str(base) + " 22:00:00"
+	request = "select count(*) from mac_inscriptions where created_at > '" + start + "' and created_at < '" + str(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")) + "' and adherent = 1;"
+	print request
+	result = cur.execute(request)
 	for row in cur.fetchall():
 		value = row[0]
-		print value
 	return jsonify({'today_ad':value})
 
 
 @app.route('/all_stats')
 def load_stats_bis():
-''' total marcheurs / adherents'''
 
 	value = 0
 	value1 = 0
@@ -58,23 +59,22 @@ def load_stats_bis():
 	result = cur.execute("select count(*) from mac_inscriptions;")
 	for row in cur.fetchall():
 			value = row[0]
-			print value
+			# print value
 	result = cur.execute("select count(*) from mac_inscriptions where adherent = 1;")
 	for row in cur.fetchall():
 			value1 = row[0]
-			print value1
+			# print value1
 	res = [{'total':value},{'adherents':value1}]
 	return jsonify(results=res)
 
 @app.route('/test')
 def test():
-''' stats de chaque journee depuis le lancement'''
 
 	db = connect_to_db_prod()
 	cur = db.cursor()
 	x = 5
 	stat_list = []
-	while x < 29:
+	while x < 30:
 		ad = 0
 		ma = 0
 		start = "16/04/" + str(x) + " 22:00:00"
@@ -98,7 +98,6 @@ def test():
 
 
 def update_stats():
-''' a virer et utilisation de all_stats'''
 
 	response = urllib2.urlopen('https://www.en-marche.fr/ajax.php?action=stats42')
 	try:
@@ -113,12 +112,10 @@ def update_stats():
 
 @app.route('/')
 def index():
-	#db = connect_to_db_prod()
-	# load_stats(db)
-	data = update_stats()
-	adherents = data[1]
-	marcheurs = data[0]
-	return render_template('index.html', current_time=datetime.utcnow(), ad=adherents, ma=marcheurs)
+	marcheurs = '-'
+	adherents = '-'
+	adherents_today = '-'
+	return render_template('index.html', current_time=datetime.utcnow(), ad=adherents, ma=marcheurs, at=adherents_today)
 
 if __name__ == '__main__':
-	manager.run()
+	app.run(debug=True,port=5001)

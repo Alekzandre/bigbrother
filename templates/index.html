@@ -2,10 +2,11 @@
 
 {% block content %}
 <div id="stats_container">
-	<h1> current time: {{moment(current_time).format('LLL')}}</h1>
+	<h1> current time: <span id="time_mon">{{moment(current_time).format('LLL')}}</span></h1>
 	{% if ad and ma %}
 	<h1> marcheurs: <span id="marcheur">{{ma}}</span> </h1>
 	<h1> adherents: <span id="adherent">{{ad}}</span> </h1>
+	<h1> adherents_today: <span id="today">{{at}}</span></h1>
 	{% endif %}
 </div>
 {% endblock %}
@@ -13,9 +14,14 @@
 {{super()}}
     <script>
     	window.setInterval(function updateStats() {
-    		$.getJSON('https://www.en-marche.fr/ajax.php?action=stats42',function(data){
-    		$("#adherent").text(data.a);
-    		$("#marcheur").text(data.i);
+    		$.getJSON('http://127.0.0.1:5001/all_stats',function(data){
+    		$("#adherent").text(data.results[1].adherents);
+    		$("#marcheur").text(data.results[0].total);
+    		});
+    	}, 1000);
+    	 window.setInterval(function updateStats() {
+    		$.getJSON('http://127.0.0.1:5001/today_ad',function(data){
+    		$("#today").text(data.today_ad);
     		});
     	}, 1000);
     </script>
