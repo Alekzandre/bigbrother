@@ -29,6 +29,7 @@ def connect_to_db_prod():
 	db = MySQLdb.connect(host=confData['host']['host_enmarche'],
 						user=confData['user']['user_enmarche'],
 						passwd=confData['pass']['pass_enmarche'],
+						port=confData['port']['port_enmarche'],
 						db=confData['name']['name_enmarche'])
 	return db
 
@@ -42,7 +43,7 @@ def load_stats():
 	base = base.strftime("%Y-%m-%d")
 	start = str(base) + " 22:00:00"
 	request = "select count(*) from mac_inscriptions where created_at > '" + start + "' and created_at < '" + str(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")) + "' and adherent = 1;"
-	print request
+	# print request
 	result = cur.execute(request)
 	for row in cur.fetchall():
 		value = row[0]
@@ -66,6 +67,62 @@ def load_stats_bis():
 			# print value1
 	res = [{'total':value},{'adherents':value1}]
 	return jsonify(results=res)
+
+@app.route('/fundraising_prop')
+def stat_amount():
+
+	db = connect_to_db_prod()
+	cur = db.cursor()
+	request = "select count(distinct(inscrit_id)) from mac_dons where rcode ='00000' and date_don > '2016-05-05 15:00:25' and amount <= 5000;"
+	result = cur.execute(request)
+	for row in cur.fetchall():
+		part = float(row[0])
+	request1 = "select count(id) from mac_dons where rcode ='00000' and date_don > '2016-05-05 15:00:25';"
+	result1 = cur.execute(request1)
+	for row in cur.fetchall():
+		value = float(row[0])
+	prop = part/value*100
+	print part,value, prop
+	return jsonify({'prop_50':str(prop)})
+
+@app.route('/today_fund')
+def fund_amount_today():
+
+	summ = 0
+	db = connect_to_db_prod()
+	cur = db.cursor()
+	base = datetime.utcnow()-timedelta(days=1)
+	base = base.strftime("%Y-%m-%d")
+	start = str(base) + " 22:00:00"
+	request = "select amount from mac_dons where rcode = '00000' and date_don > '" + start + "' and date_don < '" + str(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")) + "';"
+	cur.execute(request)
+	for row in cur.fetchall():
+   		summ = summ + int(row[0])
+   	request1 = "select count(distinct(inscrit_id)) from mac_dons where rcode ='00000' and date_don > '" + start + "' and date_don < '" + str(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")) + "';"
+   	cur.execute(request1)
+	for row in cur.fetchall():
+   		numm = str(row[0])
+   	res = [{'amount':str(summ/100)},{'today_num':numm}]
+   	return jsonify(results=res)
+
+
+@app.route('/fundraising')
+def fund_amount():
+
+	summ = 0
+	db = connect_to_db_prod()
+	cur = db.cursor()
+	start = "2016-05-05 15:00:25"
+	request = "select amount from mac_dons where rcode = '00000' and date_don > '" + start + "';"
+	cur.execute(request)
+	for row in cur.fetchall():
+   		summ = summ + int(row[0])
+   	request = "select count(distinct(inscrit_id)) from mac_dons where rcode ='00000' and date_don > '2016-05-05 15:00:25';"
+   	cur.execute(request)
+	for row in cur.fetchall():
+   		numm = str(row[0])
+   	res = [{'amount':str(summ/100)},{'donator_num':numm}]
+   	return jsonify(results=res)
 
 @app.route('/test')
 def test():
@@ -91,22 +148,11 @@ def test():
 		for row in cur.fetchall():
    			ad = row[0]
    			# print "16/04/" + str(x + 1) + " adherents: " + str(ad)
-   		print "16/04/" + str(x + 1) + " marcheurs: " + str(ma) + " adherents: " + str(ad) +"."
+   		# print "16/04/" + str(x + 1) + " marcheurs: " + str(ma) + " adherents: " + str(ad) +"."
    		stat_list.append("16/04/" + str(x + 1) + ',' + str(ma) + ',' + str(ad))
 		x = x + 1
 	return jsonify(results=stat_list)
 
-
-def update_stats():
-
-	response = urllib2.urlopen('https://www.en-marche.fr/ajax.php?action=stats42')
-	try:
-		data = json.load(response)
-		adherents = data['a']
-		marcheurs = data['i']
-	except:
-		return ('error while fetching data')
-	return (marcheurs, adherents)
 
 # route principales
 
@@ -115,7 +161,10 @@ def index():
 	marcheurs = '-'
 	adherents = '-'
 	adherents_today = '-'
-	return render_template('index.html', current_time=datetime.utcnow(), ad=adherents, ma=marcheurs, at=adherents_today)
+	fund = '-'
+	fund_num = '-'
+	today_fund = '-'
+	return render_template('index.html', current_time=datetime.utcnow(), ad=adherents, ma=marcheurs, at=adherents_today, fu=fund, fn=fund_num, tf=today_fund)
 
 if __name__ == '__main__':
 	app.run(debug=True,port=5001)

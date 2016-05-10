@@ -2,11 +2,13 @@
 
 {% block content %}
 <div id="stats_container">
-	<h1> current time: <span id="time_mon">{{moment(current_time).format('LLL')}}</span></h1>
 	{% if ad and ma %}
 	<h1> marcheurs: <span id="marcheur">{{ma}}</span> </h1>
 	<h1> adherents: <span id="adherent">{{ad}}</span> </h1>
-	<h1> adherents_today: <span id="today">{{at}}</span></h1>
+	<h1> adherents_today: <span id="today_ad">{{at}}</span></h1>
+    <h1> donations: <span id="fund">{{fu}}</span></h1>
+    <h1> donateurs: <span id="fund_num">{{fn}}</span></h1>
+    <h1> donations today: <span id="today_fund">{{tf}}</span></h1>
 	{% endif %}
 </div>
 {% endblock %}
@@ -18,11 +20,22 @@
     		$("#adherent").text(data.results[1].adherents);
     		$("#marcheur").text(data.results[0].total);
     		});
-    	}, 1000);
+    	}, 10000);
     	 window.setInterval(function updateStats() {
     		$.getJSON('http://127.0.0.1:5001/today_ad',function(data){
-    		$("#today").text(data.today_ad);
+    		$("#today_ad").text(data.today_ad);
     		});
-    	}, 1000);
+    	}, 10000);
+         window.setInterval(function updateStats() {
+            $.getJSON('http://127.0.0.1:5001/fundraising',function(data){
+            $("#fund").text(data.results[0].amount);
+            $("#fund_num").text(data.results[1].donator_num);
+            });
+        }, 10000);
+         window.setInterval(function updateStats() {
+            $.getJSON('http://127.0.0.1:5001/today_fund',function(data){
+            $("#today_fund").text(data.results[0].amount);
+            });
+        }, 10000);
     </script>
 {% endblock %}
